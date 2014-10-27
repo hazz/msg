@@ -17,3 +17,6 @@ def sign(msg):
 
 def public_key():
     return key().publickey()
+
+def generate_key():
+    return RSA.generate(2048).exportKey()

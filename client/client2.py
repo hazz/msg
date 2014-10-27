@@ -1,5 +1,6 @@
 import requests
 import auth
+from os.path import isfile
 
 SERVER = "http://localhost:5000/"
 
@@ -35,3 +36,10 @@ def register():
     global username
     key = auth.public_key().exportKey()
     post("register", {'username': username, 'public_key': key})
+
+def generate_key():
+    if isfile("key.pem"):
+       print "delete or move key.pem first."
+       return
+    with open("key.pem", "w") as f:
+        f.write(auth.generate_key())
