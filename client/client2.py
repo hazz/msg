@@ -39,7 +39,7 @@ def register():
 
 def generate_key():
     if isfile("key.pem"):
-       print "delete or move key.pem first."
-       return
+        print "delete or move key.pem first."
+        return
     with open("key.pem", "w") as f:
         f.write(auth.generate_key())

@@ -1,0 +1,24 @@
+The current login method is insecure: a user will broadcast the same signature each time which can be intercepted.
+
+New method:
+1. Client sends POST to endpoint 1, server returns a random string encrypted with client's public key.
+  The server will need to save the random string. Could this be saved in the session?
+2. Client decrypts random string, signs it and POSTS signature to endpoint 2
+3. Server verifies that signature matches the random string and the client is logged in
+
+For message sending:
+1. Client encrypts message body with recipient's public key (retrieved from server)
+2. Client encrypts entire message with server's public key
+3. Client sends encrypted message to server
+4. Server decrypts message with its private key
+5. Recipient downloads message from server and decrypts body with their private key
+
+Can you remove the need for a login phase? Answer: Yes.
+Clients would need to prove that they are the actual sender
+They can sign the message with their private key
+Signing raw JSON is buggy due to line endings, spaces around brackets, commas etc
+Have them sign the string formed from the concatenation of sender, recipient and (encrypted) body
+This sig can be included in the message
+  {'sender': 'alice', 'recipient': 'bob', 'body': 'hi', 'sig':'2208721346775815537...'}
+Then the server recieves the message, decrypts it and verifies that the sig matches the contents (using the sender's public key)
+It then knows that the message was sent from the real sender

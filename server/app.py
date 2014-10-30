@@ -39,9 +39,10 @@ def register():
 
 @app.route("/login", methods=["POST"])
 def login():
-    print request.form
     name = request.form['username']
     sig = request.form['signature']
+    print name
+    print sig
     if authenticate(name, sig):
         session['username'] = name
         return "Success"
@@ -89,10 +90,15 @@ def authenticate(name, sig):
     """Client sends name and signature of username. Verify signature with user's public key"""
     user = get_user(name)
     if user is None:
+        print "User does not exist."
         return False
     (name, keystring) = user
+    print "Found user %s" % (name,)
     pubkey = RSA.importKey(keystring)
-    return pubkey.verify(str(name), (long(sig),))
+    print pubkey.publickey().exportKey()
+    test = pubkey.verify(str(name), (long(sig),))
+    print test
+    return test
 
 
 def add_user(name, pubkey):

@@ -1,0 +1,5 @@
+*.pyc
+*.pem
+*.sqlite
+*/env
+/etc
