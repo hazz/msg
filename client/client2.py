@@ -1,5 +1,7 @@
 import requests
 import auth
+import json
+import base64
 from os.path import isfile
 
 SERVER = "http://localhost:5000/"
@@ -17,11 +19,24 @@ def conversations():
     return get("conversations")
 
 def conversation(name):
-    return get("conversations/"+name)
+    global username
+    return [(s, r, auth.decrypt(base64.standard_b64decode(b))) if r == username else (s, r, '[encrypted]') for (s, r, b) in get("conversations/"+name)]
 
+# TODO:
+# encrypt body with recipient's public key
+# sign hash(sender.recipient.body) with private key
+# encrypt whole message with server's public key -- don't bother with this
 def send_message(name, msg):
-    payload = {'sender': username, 'recipient': name, 'body': msg}
+    body = base64.standard_b64encode(auth.encrypt(msg, key_for(name)))
+    payload = {'sender': username, 'recipient': name, 'body': body}
+    sig = auth.sign(auth.hash(username+name+body))
+    payload['signature'] = str(sig)
     post("messages", payload)
+
+def key_for(name):
+    # get key from server
+    user, key = get("users/"+name)
+    return key
 
 def set_username(name):
     global username

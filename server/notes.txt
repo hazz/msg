@@ -17,7 +17,7 @@ Can you remove the need for a login phase? Answer: Yes.
 Clients would need to prove that they are the actual sender
 They can sign the message with their private key
 Signing raw JSON is buggy due to line endings, spaces around brackets, commas etc
-Have them sign the string formed from the concatenation of sender, recipient and (encrypted) body
+Have them sign the SHA256 hash of the string formed from the concatenation of sender, recipient and (encrypted) body
 This sig can be included in the message
   {'sender': 'alice', 'recipient': 'bob', 'body': 'hi', 'sig':'2208721346775815537...'}
 Then the server recieves the message, decrypts it and verifies that the sig matches the contents (using the sender's public key)

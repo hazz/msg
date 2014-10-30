@@ -1,5 +1,6 @@
 from flask import Flask, g, request, abort, session
 from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA256
 import json
 import sqlite3
 
@@ -50,6 +51,11 @@ def login():
         abort(401)
 
 
+@app.route("/users/<user>")
+def user_key(user):
+    return json.dumps(get_user(user))
+
+
 @app.route("/messages", methods=['GET', 'POST'])
 def messages():
     if 'username' not in session:
@@ -57,8 +63,12 @@ def messages():
     g.username = session['username']
     if request.method == 'GET':
         return json.dumps(get_messages())
-    send_message(g.username, request.form['recipient'], request.form['body'])
-    return "Success"
+    f = request.form
+    if authenticate_message(f['sender'], f['recipient'], f['body'], f['signature']):
+        send_message(f['sender'], f['recipient'], f['body'])
+        return "Success"
+    else:
+        abort(300)
 
 
 @app.route("/conversations")
@@ -83,6 +93,17 @@ def register_user(name, pubkey):
     db().execute("insert into users values (?,?)", (name, pubkey))
     db().commit()
     return True
+
+
+def authenticate_message(sender, recipient, body, sig):
+    sender_user = get_user(sender)
+    recipient_user = get_user(recipient)
+    if not sender_user or not recipient_user:
+        return False
+    (name, keystring) = sender_user
+    pubkey = RSA.importKey(keystring)
+    digest = SHA256.new(sender+recipient+body).hexdigest()
+    return pubkey.verify(digest, (long(sig),))
 
 
 # TODO: sign hashes instead of raw usernames

@@ -31,7 +31,8 @@ def conversation_loop(name):
     msg = None
     while msg != ':q':
         msg = raw_input('%s:\t' % cl2.username)
-        cl2.send_message(name, msg)
+        if msg != ':q':
+            cl2.send_message(name, msg)
     main_loop()
 
 
