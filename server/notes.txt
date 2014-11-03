@@ -1,6 +1,4 @@
-The current login method is insecure: a user will broadcast the same signature each time which can be intercepted.
-
-New method:
+The current login method is insecure: a user will broadcast the same signature each time which can be intercepted.  New method:
 1. Client sends POST to endpoint 1, server returns a random string encrypted with client's public key.
   The server will need to save the random string. Could this be saved in the session?
 2. Client decrypts random string, signs it and POSTS signature to endpoint 2
@@ -22,3 +20,33 @@ This sig can be included in the message
   {'sender': 'alice', 'recipient': 'bob', 'body': 'hi', 'sig':'2208721346775815537...'}
 Then the server recieves the message, decrypts it and verifies that the sig matches the contents (using the sender's public key)
 It then knows that the message was sent from the real sender
+
+
+How PGP handles the large plaintext problem:
+Encrypt plaintext with a symmetric algorithm (AES or similar). Use a randomly generated one time key. Encrypt the key with the recipient's public key. Send the encrypted plaintext along with the encrypted key.
+
+We will need to do this twice:
+1. Encrypt message body w/ key encrypted with recipient's public key
+2. Encypt entire payload with key encrypted with server's public key
+
+
+So the entire process will be:
+1. Generate key A 
+2. Symmetrically encrypt body with key A
+4. Encrypt key A with recipient public key
+5. Sign hash(sender+recipient+(encrypted)body) with client private key
+6. Generate key B
+7. Symmetrically encrypt whole payload (sender, recipient, encrypted body, signature) with key B
+8. Encrypt key B with server's public key
+9. Send { key: [B], 
+          payload: [{
+              sender: sender, 
+              recipient, recipient, 
+              body: [body], 
+              signature: signature, 
+              key: [A]
+          }]
+        } 
+  (where [] implies encryption)
+
+In the future, I'd like to have message authentication (i.e. determining that a message from Alice actually came from Alice) happen clientside, so the server has no knowledge of who is is sending messages to whom.

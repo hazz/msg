@@ -3,3 +3,5 @@
 *.sqlite
 */env
 /etc
+msg-osx/*/*
+msg-osx/*/*.*

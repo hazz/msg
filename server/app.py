@@ -56,13 +56,8 @@ def user_key(user):
     return json.dumps(get_user(user))
 
 
-@app.route("/messages", methods=['GET', 'POST'])
+@app.route("/messages", methods=['POST'])
 def messages():
-    if 'username' not in session:
-        abort(401)
-    g.username = session['username']
-    if request.method == 'GET':
-        return json.dumps(get_messages())
     f = request.form
     if authenticate_message(f['sender'], f['recipient'], f['body'], f['signature']):
         send_message(f['sender'], f['recipient'], f['body'])
@@ -77,6 +72,7 @@ def conversations():
             abort(401)
     g.username = session['username']
     return json.dumps(get_conversations())
+
 
 @app.route("/conversations/<name>")
 def conversation(name):
