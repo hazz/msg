@@ -49,4 +49,10 @@ So the entire process will be:
         } 
   (where [] implies encryption)
 
+The server process will be:
+1. Decrypt key B with server private key
+2. Decrypt payload with key B
+3. Verify signature with sender's public keyA
+4. Send {sender, recipient, body, keyA} to recipient
+
 In the future, I'd like to have message authentication (i.e. determining that a message from Alice actually came from Alice) happen clientside, so the server has no knowledge of who is is sending messages to whom.

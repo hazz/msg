@@ -7,7 +7,7 @@ def create_tables():
     cursor = conn.cursor()
     cursor.execute('''DROP TABLE messages''')
     cursor.execute('''DROP TABLE users''')
-    cursor.execute('''CREATE TABLE messages (sender text, recipient text, body text)''')
+    cursor.execute('''CREATE TABLE messages (sender text, recipient text, body text, key text)''')
     cursor.execute('''CREATE TABLE users (name text, publickey text)''')
 
 
@@ -17,9 +17,9 @@ def get_messages(recipient):
     return cursor.fetchall()
 
 
-def send_message(sender, recipient, body):
+def send_message(sender, recipient, body, key):
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO messages VALUES (?,?,?)', (sender, recipient, body))
+    cursor.execute('INSERT INTO messages VALUES (?,?,?,?)', (sender, recipient, body, key))
 
 
 def close():

@@ -4,7 +4,6 @@ from Crypto import Random
 from Crypto.Cipher import AES
 
 keyfile = "key.pem"
-server_public_key = "server.pub.pem"
 
 def set_keyfile(filename):
     global keyfile
@@ -13,11 +12,6 @@ def set_keyfile(filename):
 def key():
     global keyfile
     with open(keyfile, "r") as f:
-        return RSA.importKey(f.read())
-
-def server_key():
-    global server_public_key
-    with open(server_public_key, "r") as f:
         return RSA.importKey(f.read())
 
 def sign(msg):

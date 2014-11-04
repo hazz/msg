@@ -1,13 +1,14 @@
 import curses
 import client2 as cl
 from random import random as rand
+import sys
 
 stdscr = None
 cursor = 0
 
-def setup():
-    cl.set_username('alice')
-    # cl.auth.set_keyfile('bob.pem')
+def setup(username, keyfile):
+    cl.set_username(username)
+    cl.auth.set_keyfile(keyfile)
     cl.login()
 
 def line(y, text):
@@ -76,5 +77,8 @@ def run(s):
             show_conversation(convos[cursor-2])
 
 
-setup()
+username = sys.argv[1] or 'alice'
+keyfile = sys.argv[2] or 'key.pem'
+
+setup(username, keyfile)
 curses.wrapper(run)

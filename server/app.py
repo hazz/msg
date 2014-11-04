@@ -3,6 +3,9 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 import json
 import sqlite3
+import auth
+from base64 import standard_b64encode as b64e, standard_b64decode as b64d
+
 
 DATABASE = './messages.sqlite'
 app = Flask(__name__)
@@ -58,9 +61,9 @@ def user_key(user):
 
 @app.route("/messages", methods=['POST'])
 def messages():
-    f = request.form
-    if authenticate_message(f['sender'], f['recipient'], f['body'], f['signature']):
-        send_message(f['sender'], f['recipient'], f['body'])
+    (success, sender, recipient, body, key) = authenticate_message(request.form)
+    if success:
+        send_message(sender, recipient, body, key)
         return "Success"
     else:
         abort(300)
@@ -91,15 +94,25 @@ def register_user(name, pubkey):
     return True
 
 
-def authenticate_message(sender, recipient, body, sig):
+def authenticate_message(form):
+    print type(form['key'])
+    keyB = auth.decrypt(b64d(form['key']))
+    payload = b64d(form['payload'])
+    payload = auth.aes_decrypt(payload, keyB)
+    payload = json.loads(payload)
+    sender, recipient, body, keyA, sig = payload['sender'], payload['recipient'], payload['body'], payload['key'], payload['signature']
     sender_user = get_user(sender)
     recipient_user = get_user(recipient)
-    if not sender_user or not recipient_user:
-        return False
+    if not (sender_user and recipient_user):
+        return (False,)
     (name, keystring) = sender_user
     pubkey = RSA.importKey(keystring)
     digest = SHA256.new(sender+recipient+body).hexdigest()
-    return pubkey.verify(digest, (long(sig),))
+    sig = b64d(sig)
+    if pubkey.verify(digest, (long(sig),)):
+        return (True, sender, recipient, body, keyA)
+    else:
+        return (False,)
 
 
 # TODO: sign hashes instead of raw usernames
@@ -128,12 +141,12 @@ def get_user(name):
 
 def get_messages():
     messages = db().execute("select * from messages where recipient =?", (g.username,))
-    return [{'sender':s, 'recipient':r, 'body':b} for (s,r,b) in messages.fetchall()]
+    return [{'sender':s, 'recipient':r, 'body':b, 'key':k} for (s,r,b,k) in messages.fetchall()]
 
 
-def send_message(sender, recipient, body):
+def send_message(sender, recipient, body, key):
     print (sender, recipient, body)
-    db().execute('INSERT INTO messages VALUES (?,?,?)', (sender, recipient, body))
+    db().execute('INSERT INTO messages VALUES (?,?,?,?)', (sender, recipient, body, key))
     db().commit()
 
 

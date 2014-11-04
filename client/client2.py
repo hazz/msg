@@ -1,7 +1,7 @@
 import requests
 import auth
 import json
-import base64
+from base64 import standard_b64encode as b64e, standard_b64decode as b64d
 from os.path import isfile
 
 SERVER = "http://localhost:5000/"
@@ -20,22 +20,45 @@ def conversations():
 
 def conversation(name):
     global username
-    return [(s, r, auth.decrypt(base64.standard_b64decode(b))) if r == username else (s, r, '[encrypted]') for (s, r, b) in get("conversations/"+name)]
+    conversations = get("conversations/"+name)
+    processed_conversations = [] 
+    for (s, r, body, key) in conversations:
+      if r == username:
+        processed_conversations.append((s, r, decrypt_message(body, key)))
+      else:
+        processed_conversations.append( (s, r, "[encrypted]"))
+    return processed_conversations
+
+def decrypt_message(msg, key):
+  key = auth.decrypt(b64d(key))
+  return auth.aes_decrypt(b64d(msg), key)
 
 # TODO:
-# encrypt body with recipient's public key
-# sign hash(sender.recipient.body) with private key
-# encrypt whole message with server's public key -- don't bother with this
+# AES encrypt body with key A
+# Encrypt key A with recipient's public key 
+# Sign hash(sender.recipient.body) with private key
+# AES encrypt whole message with key B
+# Encrypt key B with server's public key
 def send_message(name, msg):
-    body = base64.standard_b64encode(auth.encrypt(msg, key_for(name)))
-    payload = {'sender': username, 'recipient': name, 'body': body}
-    sig = auth.sign(auth.hash(username+name+body))
+    keyA, body = auth.aes_encrypt(msg)
+    body = b64e(body)
+    recipient_key = key_for(name)
+    if recipient_key is None:
+      return False
+    keyA = b64e(auth.encrypt(keyA, recipient_key))
+    payload = {'sender': username, 'recipient': name, 'body': body, 'key': keyA}
+    sig = b64e(str(auth.sign(auth.hash(username+name+body))))
     payload['signature'] = str(sig)
-    post("messages", payload)
+    keyB, payload = auth.aes_encrypt(json.dumps(payload))
+    payload = b64e(payload)
+    keyB = b64e(auth.encrypt(keyB, auth.server_key()))
+    post("messages", {'key': keyB, 'payload': payload})
 
 def key_for(name):
-    # get key from server
-    user, key = get("users/"+name)
+    res = get("users/"+name)
+    if res is None:
+      return None
+    user, key = res
     return key
 
 def set_username(name):
