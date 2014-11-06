@@ -22,11 +22,11 @@ def conversation(name):
     global username
     conversations = get("conversations/"+name)
     processed_conversations = [] 
-    for (s, r, body, key) in conversations:
+    for (s, r, body, key1, key2) in conversations:
       if r == username:
-        processed_conversations.append((s, r, decrypt_message(body, key)))
+        processed_conversations.append((s, r, decrypt_message(body, key1)))
       else:
-        processed_conversations.append( (s, r, "[encrypted]"))
+        processed_conversations.append((s, r, decrypt_message(body, key2)))
     return processed_conversations
 
 def decrypt_message(msg, key):
@@ -34,19 +34,18 @@ def decrypt_message(msg, key):
   return auth.aes_decrypt(b64d(msg), key)
 
 # TODO:
-# AES encrypt body with key A
-# Encrypt key A with recipient's public key 
-# Sign hash(sender.recipient.body) with private key
-# AES encrypt whole message with key B
-# Encrypt key B with server's public key
+# Duplicate key A
+# Encrypt duplicate with sender's public key
 def send_message(name, msg):
     keyA, body = auth.aes_encrypt(msg)
     body = b64e(body)
     recipient_key = key_for(name)
     if recipient_key is None:
       return False
+    keyA2 = keyA
     keyA = b64e(auth.encrypt(keyA, recipient_key))
-    payload = {'sender': username, 'recipient': name, 'body': body, 'key': keyA}
+    keyA2 = b64e(auth.encrypt(keyA2, auth.public_key()))
+    payload = {'sender': username, 'recipient': name, 'body': body, 'key': keyA, 'sender_key': keyA2}
     sig = b64e(str(auth.sign(auth.hash(username+name+body))))
     payload['signature'] = str(sig)
     keyB, payload = auth.aes_encrypt(json.dumps(payload))

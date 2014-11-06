@@ -33,18 +33,21 @@ We will need to do this twice:
 So the entire process will be:
 1. Generate key A 
 2. Symmetrically encrypt body with key A
+3. Duplicate key A -> key A2
 4. Encrypt key A with recipient public key
-5. Sign hash(sender+recipient+(encrypted)body) with client private key
-6. Generate key B
-7. Symmetrically encrypt whole payload (sender, recipient, encrypted body, signature) with key B
-8. Encrypt key B with server's public key
-9. Send { key: [B], 
+5. Encrypt key A2 with sender public key
+6. Sign hash(sender+recipient+(encrypted)body) with client private key
+7. Generate key B
+8. Symmetrically encrypt whole payload (sender, recipient, encrypted body, signature, key A, key A2) with key B
+9. Encrypt key B with server's public key
+10. Send { key: [B], 
           payload: [{
               sender: sender, 
               recipient, recipient, 
               body: [body], 
               signature: signature, 
-              key: [A]
+              key: [A],
+              sender_key: [A2]
           }]
         } 
   (where [] implies encryption)
@@ -53,6 +56,8 @@ The server process will be:
 1. Decrypt key B with server private key
 2. Decrypt payload with key B
 3. Verify signature with sender's public keyA
-4. Send {sender, recipient, body, keyA} to recipient
+4. Save {sender, recipient, body, keyA, keyA2} in database 
 
 In the future, I'd like to have message authentication (i.e. determining that a message from Alice actually came from Alice) happen clientside, so the server has no knowledge of who is is sending messages to whom.
+
+Also, we can duplicate key A and encrypt the duplicate with the sender's public key so she can read the messages she has sent
