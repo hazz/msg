@@ -61,3 +61,14 @@ The server process will be:
 In the future, I'd like to have message authentication (i.e. determining that a message from Alice actually came from Alice) happen clientside, so the server has no knowledge of who is is sending messages to whom.
 
 Also, we can duplicate key A and encrypt the duplicate with the sender's public key so she can read the messages she has sent
+
+A new method for authentication (initial handshake):
+0. Client sends request for authentication, providing username
+1. Server generates random phrase and duplicates it -> p1 & p2
+2. Server encrypts p1 with client public key
+3. Server encrypts p2 with server public key
+4. Server sends {p1, p2} to client
+5. Client decrypts p1 and signs it with client private key -> sig
+6. Client sends {sig, p2} to server
+7. Server decrypts p2 and verifies sig matches it using client public key
+8. If sig matches decrypted p2, then user is genuine
