@@ -66,8 +66,15 @@ def set_username(name):
 
 def login():
     global cookie
-    resp = post("login", {'username': username, 'signature': auth.sign(username)})
-    cookie = resp.cookies
+    resp = post("login", {'username': username})
+    if resp.status_code == 200:
+      data = json.loads(resp.text)
+      client_secret = b64d(data['client_secret'])
+      secret = auth.decrypt(client_secret)
+      sig = auth.sign(secret)
+      resp = post("authorise", {'username': username, 'server_secret': data['server_secret'], 'signature': b64e(str(sig))})
+      if resp.status_code == 200:
+        cookie = resp.cookies
 
 def register():
     global username

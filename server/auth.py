@@ -55,3 +55,11 @@ def aes_decrypt(data, key):
     cipher = AES.new(key, AES.MODE_CFB, iv)
     return cipher.decrypt(data)
 
+def generate_secret():
+    return Random.new().read(40)
+
+def verify(key, data, sig):
+    if not isinstance(key, RSA._RSAobj):
+      key = RSA.importKey(key)
+    return key.verify(data, (long(sig),))
+

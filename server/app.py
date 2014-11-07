@@ -13,14 +13,6 @@ app = Flask(__name__)
 app.secret_key = 'Brl3lbHVQ11CWOL3E1hy'
 
 
-# Database
-# def db():
-#     db = getattr(g, '_database', None)
-#     if db is None:
-#         db = g._database = sqlite3.connect(DATABASE)
-#     return db
-
-
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
@@ -31,7 +23,6 @@ def close_connection(exception):
 # Routes
 @app.route("/register", methods=["POST"])
 def register():
-    print request.form
     name = request.form['username']
     pubkey = request.form['public_key']
     success = register_user(name, pubkey)
@@ -40,18 +31,30 @@ def register():
     return "Success"
 
 
-
 @app.route("/login", methods=["POST"])
 def login():
     name = request.form['username']
+    client_key = key_for(name)
+    if client_key is None:
+        abort(401)
+    secret = auth.generate_secret()
+    p1 = auth.encrypt(secret, client_key)
+    p2 = auth.encrypt(secret, auth.key())
+    return json.dumps({'client_secret': b64e(p1), 'server_secret': b64e(p2)})
+
+@app.route("/authorise", methods=["POST"])
+def login2():
+    name = request.form['username']
+    p2 = request.form['server_secret']
     sig = request.form['signature']
-    if authenticate(name, sig):
+    server_secret = auth.decrypt(b64d(p2))
+    genuine = auth.verify(key_for(name), server_secret, b64d(sig))
+    if genuine:
         session['username'] = name
-        print "%s successfully logged in." % (name,)
+        print "%s successfully logged in" % (name,)
         return "Success"
     else:
         abort(401)
-
 
 @app.route("/users/<user>")
 def user_key(user):
@@ -102,28 +105,20 @@ def authenticate_message(form):
     recipient_user = db.get_user(recipient)
     if not (sender_user and recipient_user):
         return (False,)
-    (name, keystring) = sender_user
-    pubkey = RSA.importKey(keystring)
     digest = SHA256.new(sender+recipient+body).hexdigest()
     sig = b64d(sig)
-    if pubkey.verify(digest, (long(sig),)):
+    if auth.verify(key_for(sender), digest, sig):
         return (True, (sender, recipient, body, keyA, keyA2))
     else:
         return (False,())
 
-
-# TODO: sign hashes instead of raw usernames
-def authenticate(name, sig):
-    """Client sends name and signature of username. Verify signature with user's public key"""
+def key_for(name):
     user = db.get_user(name)
     if user is None:
-        print "User does not exist."
-        return False
-    (name, keystring) = user
-    pubkey = RSA.importKey(keystring)
-    test = pubkey.verify(str(name), (long(sig),))
-    return test
-
+        return None
+    _, key = user
+    return key
 
 if __name__ == '__main__':
     app.run(debug=True)
+
