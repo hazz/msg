@@ -21,6 +21,10 @@ def close_connection(exception):
 
 
 # Routes
+@app.route("/")
+def index():
+    return "msg"
+
 @app.route("/register", methods=["POST"])
 def register():
     name = request.form['username']
