@@ -5,9 +5,10 @@ import json
 import sqlite3
 import auth
 import db
+import logging
 from base64 import standard_b64encode as b64e, standard_b64decode as b64d
 
-
+logging.basicConfig(filename='info.log',level=logging.INFO)
 DATABASE = './messages.sqlite'
 app = Flask(__name__)
 app.secret_key = 'Brl3lbHVQ11CWOL3E1hy'
@@ -28,6 +29,7 @@ def index():
 @app.route("/register", methods=["POST"])
 def register():
     name = request.form['username']
+    app.logger.info("REGISTER: %s" % (name))
     pubkey = request.form['public_key']
     success = register_user(name, pubkey)
     if not success:
@@ -38,6 +40,7 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     name = request.form['username']
+    app.logger.info("LOGIN: %s" % (name))
     client_key = key_for(name)
     if client_key is None:
         abort(401)
@@ -124,5 +127,7 @@ def key_for(name):
     return key
 
 if __name__ == '__main__':
+    #handler = FileHandler("info.log")
+    #handler.setLevel(
     app.run(debug=True)
 
