@@ -3,8 +3,9 @@ import auth
 import json
 from base64 import standard_b64encode as b64e, standard_b64decode as b64d
 from os.path import isfile
+import os
 
-SERVER = "http://localhost:5000/"
+SERVER = os.environ['MSG_SERVER'] or "http://localhost:5000/"
 
 username = None
 cookie = None

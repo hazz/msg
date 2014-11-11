@@ -1,0 +1,27 @@
+uwsgi + nginx
+
+commands:
+cd msg/server
+uwsgi -w app:app --ini /etc/uwsgi/config.ini &
+sudo service nginx stop && sudo service nginx start
+
+/etc/uwsgi/config.ini:
+[uwsgi]
+socket = /tmp/uwsgi.sock
+chmod-socket = 664
+
+/etc/nginx/nginx.conf:
+worker_processes: 1;
+events {
+  worker_connections 1024;
+}
+http {
+  server {
+    listen 80;
+    location / {
+      include uwsgi_params;
+      uwsgi_pass unix:/tmp/uwsgi.sock;
+    }
+  }
+}
+

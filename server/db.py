@@ -11,8 +11,8 @@ def conn():
 
 def create_tables():
     cursor = conn().cursor()
-    cursor.execute("DROP TABLE messages")
-    cursor.execute("DROP TABLE users")
+    cursor.execute("DROP TABLE IF EXISTS messages")
+    cursor.execute("DROP TABLE IF EXISTS users")
     cursor.execute("CREATE TABLE messages (sender text, recipient text, body text, key text, sender_key text)")
     cursor.execute("CREATE TABLE users (name text, publickey text)")
 
