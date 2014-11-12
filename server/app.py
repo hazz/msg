@@ -8,7 +8,6 @@ import db
 import logging
 from base64 import standard_b64encode as b64e, standard_b64decode as b64d
 
-logging.basicConfig(filename='info.log',level=logging.INFO)
 DATABASE = './messages.sqlite'
 app = Flask(__name__)
 app.secret_key = 'Brl3lbHVQ11CWOL3E1hy'
@@ -33,7 +32,9 @@ def register():
     pubkey = request.form['public_key']
     success = register_user(name, pubkey)
     if not success:
+        app.logger.warn("User %s already exists - cannot register" % (name))
         abort(409)
+    app.logger.info("User %s successfully registered" % (name))
     return "Success"
 
 
@@ -43,6 +44,7 @@ def login():
     app.logger.info("LOGIN: %s" % (name))
     client_key = key_for(name)
     if client_key is None:
+        app.logger.warn("No key exists for user %s. User may not be registered." % name)
         abort(401)
     secret = auth.generate_secret()
     p1 = auth.encrypt(secret, client_key)
@@ -58,7 +60,7 @@ def login2():
     genuine = auth.verify(key_for(name), server_secret, b64d(sig))
     if genuine:
         session['username'] = name
-        print "%s successfully logged in" % (name,)
+        app.logger.info("%s successfully logged in" % (name,))
         return "Success"
     else:
         abort(401)
@@ -83,7 +85,9 @@ def conversations():
     if 'username' not in session:
             abort(401)
     g.username = session['username']
-    return json.dumps(db.get_conversations(g.username))
+    res = db.get_conversations(g.username)
+    app.logger.info(res)
+    return json.dumps(res)
 
 
 @app.route("/conversations/<name>")

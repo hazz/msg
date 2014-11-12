@@ -5,7 +5,7 @@ from base64 import standard_b64encode as b64e, standard_b64decode as b64d
 from os.path import isfile
 import os
 
-SERVER = os.environ['MSG_SERVER'] or "http://localhost:5000/"
+SERVER = os.environ.get('MSG_SERVER') or "http://localhost:5000/"
 
 username = None
 cookie = None
@@ -17,7 +17,9 @@ def post(path, data):
     return requests.post(SERVER+path, cookies=cookie, data=data)
 
 def conversations():
-    return get("conversations")
+    convs = get("conversations")
+    print convs
+    return convs
 
 def conversation(name):
     global username
@@ -68,19 +70,26 @@ def set_username(name):
 def login():
     global cookie
     resp = post("login", {'username': username})
+    if resp.status_code != 200:
+      return False
+    data = json.loads(resp.text)
+    client_secret = b64d(data['client_secret'])
+    secret = auth.decrypt(client_secret)
+    sig = auth.sign(secret)
+    resp = post("authorise", {'username': username, 'server_secret': data['server_secret'], 'signature': b64e(str(sig))})
     if resp.status_code == 200:
-      data = json.loads(resp.text)
-      client_secret = b64d(data['client_secret'])
-      secret = auth.decrypt(client_secret)
-      sig = auth.sign(secret)
-      resp = post("authorise", {'username': username, 'server_secret': data['server_secret'], 'signature': b64e(str(sig))})
-      if resp.status_code == 200:
-        cookie = resp.cookies
+      cookie = resp.cookies
+      return True
+    return False
 
 def register():
     global username
     key = auth.public_key().exportKey()
-    post("register", {'username': username, 'public_key': key})
+    resp = post("register", {'username': username, 'public_key': key})
+    if resp.status_code == 200:
+      return True
+    else:
+      return False
 
 def generate_key():
     if isfile("key.pem"):

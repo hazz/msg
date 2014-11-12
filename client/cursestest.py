@@ -54,8 +54,8 @@ def show_conversation(name):
 def render_conversation(conv):
     for i, c in enumerate(conv):
         sender, recipient, body = c
-        line(i, "%s:\t%s" % (sender, body))
-    line(len(conv), "%s:\t" % (cl.username,))
+        line(i, "%s: %s" % (sender, body))
+    line(len(conv), "%s: " % (cl.username,))
 
 def run(s):
     global stdscr, cursor
@@ -76,9 +76,15 @@ def run(s):
             stdscr.clear()         
             show_conversation(convos[cursor-2])
 
-
-username = sys.argv[1] or 'alice'
-keyfile = sys.argv[2] or 'key.pem'
+if len(sys.argv) == 1:
+  username = "alice"
+  keyfile = "alice.pem"
+if len(sys.argv) == 2:
+  username = sys.argv[1]
+  keyfile = username+".pem"
+if len(sys.argv) == 3:
+  username = sys.argv[1]
+  keyfile = sys.argv[2]
 
 setup(username, keyfile)
 curses.wrapper(run)

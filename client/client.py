@@ -39,6 +39,8 @@ def conversation_loop(name):
 if __name__ == '__main__':
     uname = raw_input("username: ")
     cl2.set_username(uname)
+    cl2.auth.keyfile = uname+".pem"
+    print cl2.auth.keyfile
     print "logging in..."
     cl2.login()
     print "Welcome to msg."
