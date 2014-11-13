@@ -3,6 +3,7 @@ from Crypto.Hash import SHA256
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Signature import PKCS1_v1_5 as pk
+from Crypto.Cipher import PKCS1_OAEP as oaep
 
 keyfile = "key.pem"
 server_public_key = "server.pub.pem"
@@ -39,20 +40,17 @@ def generate_key():
 def encrypt(msg, key):
     if not isinstance(key, RSA._RSAobj):
         key = RSA.importKey(key)
-    (res,) = key.encrypt(msg, 0)
-    return res
+    return oaep.new(key).encrypt(msg)
 
 def encrypt_for_server(msg):
     global server_key
-    (res,) = server_key().encrypt(msg, 0)
-    return res
+    return oaep.new(server_key()).encrypt(msg)
 
 def decrypt(msg):
-    return key().decrypt(msg)
+    return oaep.new(key()).decrypt(msg)
 
 def hash(data):
-    hash = SHA256.new()
-    hash.update(data)
+    hash = SHA256.new(data)
     return hash.hexdigest()
 
 def aes_encrypt(data):

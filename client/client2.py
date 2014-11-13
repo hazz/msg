@@ -18,7 +18,6 @@ def post(path, data):
 
 def conversations():
     convs = get("conversations")
-    print convs
     return convs
 
 def conversation(name):
@@ -36,9 +35,6 @@ def decrypt_message(msg, key):
   key = auth.decrypt(b64d(key))
   return auth.aes_decrypt(b64d(msg), key)
 
-# TODO:
-# Duplicate key A
-# Encrypt duplicate with sender's public key
 def send_message(name, msg):
     keyA, body = auth.aes_encrypt(msg)
     body = b64e(body)
