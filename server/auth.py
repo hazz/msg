@@ -2,6 +2,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto import Random
 from Crypto.Cipher import AES
+from Crypto.Signature import PKCS1_v1_5 as pk
 
 keyfile = "key.pem"
 
@@ -15,8 +16,15 @@ def key():
         return RSA.importKey(f.read())
 
 def sign(msg):
-    (sig, ) = key().sign(msg, 0)
+    h = SHA256.new(msg)
+    sig = pk.new(key()).sign(h)
     return sig
+
+def verify(key, data, sig):
+    if not isinstance(key, RSA._RSAobj):
+      key = RSA.importKey(key)
+    h = SHA256.new(data)
+    return pk.new(key).verify(h, sig)
 
 def public_key():
     return key().publickey()
@@ -57,9 +65,4 @@ def aes_decrypt(data, key):
 
 def generate_secret():
     return Random.new().read(40)
-
-def verify(key, data, sig):
-    if not isinstance(key, RSA._RSAobj):
-      key = RSA.importKey(key)
-    return key.verify(data, (long(sig),))
 

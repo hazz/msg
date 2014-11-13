@@ -77,7 +77,7 @@ def messages():
         db.send_message(msg)
         return "Success"
     else:
-        abort(300)
+        abort(401)
 
 
 @app.route("/conversations")
@@ -116,9 +116,8 @@ def authenticate_message(form):
     recipient_user = db.get_user(recipient)
     if not (sender_user and recipient_user):
         return (False,)
-    digest = SHA256.new(sender+recipient+body).hexdigest()
     sig = b64d(sig)
-    if auth.verify(key_for(sender), digest, sig):
+    if auth.verify(key_for(sender), sender+recipient+body, sig):
         return (True, (sender, recipient, body, keyA, keyA2))
     else:
         return (False,())

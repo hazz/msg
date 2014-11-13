@@ -2,6 +2,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto import Random
 from Crypto.Cipher import AES
+from Crypto.Signature import PKCS1_v1_5 as pk
 
 keyfile = "key.pem"
 server_public_key = "server.pub.pem"
@@ -21,8 +22,13 @@ def server_key():
         return RSA.importKey(f.read())
 
 def sign(msg):
-    (sig, ) = key().sign(msg, 0)
+    h = SHA256.new(msg)
+    sig = pk.new(key()).sign(h)
     return sig
+
+def verify(msg, sig, key):
+   h = SHA256.new(msg)
+   return pk.new(key).verify(h, sig)
 
 def public_key():
     return key().publickey()

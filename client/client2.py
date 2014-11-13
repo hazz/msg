@@ -49,7 +49,7 @@ def send_message(name, msg):
     keyA = b64e(auth.encrypt(keyA, recipient_key))
     keyA2 = b64e(auth.encrypt(keyA2, auth.public_key()))
     payload = {'sender': username, 'recipient': name, 'body': body, 'key': keyA, 'sender_key': keyA2}
-    sig = b64e(str(auth.sign(auth.hash(username+name+body))))
+    sig = b64e(str(auth.sign(username+name+body)))
     payload['signature'] = str(sig)
     keyB, payload = auth.aes_encrypt(json.dumps(payload))
     payload = b64e(payload)
