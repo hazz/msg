@@ -2,6 +2,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto import Random
 from Crypto.Cipher import AES
+from Crypto.Util import Counter
 from Crypto.Signature import PKCS1_v1_5 as pk
 from Crypto.Cipher import PKCS1_OAEP as oaep
 
@@ -52,13 +53,13 @@ def hash(data):
 def aes_encrypt(data):
     key = Random.new().read(AES.block_size)
     iv = Random.new().read(AES.block_size)
-    cipher = AES.new(key, AES.MODE_CFB, iv)
+    cipher = AES.new(key, AES.MODE_CTR, iv, counter=Counter.new(128, initial_value=long(iv.encode("hex"), 16)))
     return (key, iv+cipher.encrypt(data))
 
 def aes_decrypt(data, key):
     iv = data[0:AES.block_size]
     data = data[AES.block_size:len(data)]
-    cipher = AES.new(key, AES.MODE_CFB, iv)
+    cipher = AES.new(key, AES.MODE_CTR, iv, counter=Counter.new(128, initial_value=long(iv.encode("hex"), 16)))
     return cipher.decrypt(data)
 
 def generate_secret():
