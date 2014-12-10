@@ -2,6 +2,5 @@
 *.pem
 *.sqlite
 */env
+swift/msg/msg/client/env
 /etc
-msg-osx/*/*
-msg-osx/*/*.*

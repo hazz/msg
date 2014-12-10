@@ -1,0 +1,59 @@
+#!env/bin/python
+import argparse
+import client2 as cl2
+import sys
+import json
+
+# Usage:
+# msg-client alice register
+# msg-client alice list-conversations
+# msg-client alice show-conversation --recipient bob
+# msg-client alice send_message --recipient bob --body "some message"
+
+parser = argparse.ArgumentParser()
+parser.add_argument("command", help="register, list-conversations, show-conversation, send-message")
+parser.add_argument("username")
+parser.add_argument("--recipient")
+parser.add_argument("--body")
+args = parser.parse_args()
+
+cl2.username = args.username
+
+def register():
+    cl2.generate_key()
+    if cl2.register():
+        sys.exit(0)
+
+def list_conversations():
+    cl2.login()
+    print json.dumps(cl2.conversations())
+    sys.exit(0)
+
+def show_conversation():
+    name = args.recipient
+    if name is None:
+        print "recipient required"
+        sys.exit(2)
+    cl2.login()
+    print json.dumps(cl2.conversation(name))
+    sys.exit(0)
+
+def send_message():
+    name = args.recipient
+    body = args.body
+    if name is None or body is None:
+        print "recipient and message body required"
+        sys.exit(2)
+    cl2.login()
+    if cl2.send_message(name, body):
+        sys.exit(0)
+    sys.exit(1)
+
+commands = {
+    "register": register,
+    "list-conversations": list_conversations,
+    "show-conversation": show_conversation,
+    "send-message": send_message
+}
+
+commands[args.command]()
